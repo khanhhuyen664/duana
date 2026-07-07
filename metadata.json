@@ -1,0 +1,6 @@
+{
+  "name": "English Placement Test",
+  "description": "Website thi đánh giá năng lực tiếng Anh đầu vào chuyên nghiệp, giao diện hiện đại, responsive trên điện thoại và máy tính.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

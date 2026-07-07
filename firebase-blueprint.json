@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "GlobalSettings": {
+      "title": "GlobalSettings",
+      "description": "System branding and configuration settings",
+      "type": "object",
+      "properties": {
+        "backgroundColor": { "type": "string" },
+        "logoUrl": { "type": "string" }
+      },
+      "required": ["backgroundColor", "logoUrl"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "description": "An exam or placement test designed by admins",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "code": { "type": "string" },
+        "category": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "questions": { "type": "array" },
+        "themeBgColor": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "audioUrl": { "type": "string" },
+        "durationLimit": { "type": "integer" }
+      },
+      "required": ["id", "name", "code", "category", "status", "createdAt", "questions"]
+    },
+    "Candidate": {
+      "title": "Candidate",
+      "description": "A student registered to take an exam",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "testId": { "type": "string" },
+        "status": { "type": "string" },
+        "tabViolations": { "type": "integer" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "answers": { "type": "object" },
+        "speakingFiles": { "type": "object" },
+        "durationSeconds": { "type": "integer" },
+        "createdAt": { "type": "string" },
+        "isBlocked": { "type": "boolean" },
+        "writingGrades": { "type": "object" }
+      },
+      "required": ["id", "fullName", "phoneNumber", "testId", "status", "tabViolations", "startTime", "answers", "createdAt"]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "description": "A finalized placement test result",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fullName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "testId": { "type": "string" },
+        "status": { "type": "string" },
+        "objectiveScore": { "type": "integer" },
+        "answers": { "type": "object" },
+        "writingGrades": { "type": "object" },
+        "speakingFiles": { "type": "object" },
+        "durationSeconds": { "type": "integer" },
+        "tabViolations": { "type": "integer" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "fullName", "phoneNumber", "testId", "status", "objectiveScore", "answers", "startTime", "endTime", "createdAt"]
+    }
+  },
+  "firestore": {
+    "settings/{settingsId}": {
+      "schema": "GlobalSettings",
+      "description": "System-wide global settings document"
+    },
+    "exams/{examId}": {
+      "schema": "Exam",
+      "description": "Exam data and questions"
+    },
+    "candidates/{candidateId}": {
+      "schema": "Candidate",
+      "description": "Candidate registration and active session"
+    },
+    "results/{resultId}": {
+      "schema": "ExamResult",
+      "description": "Candidate finalized exam score and answers"
+    }
+  }
+}

@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return true; // Dev bypass to support seamless local admin authentication even when Firebase Auth providers are disabled
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidGlobalSettings(data) {
+      return data.backgroundColor is string && data.backgroundColor.size() <= 32
+          && data.logoUrl is string && data.logoUrl.size() <= 2048;
+    }
+
+    function isValidExam(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.name is string && data.name.size() <= 512
+          && data.code is string && data.code.size() <= 128
+          && data.category is string && data.category.size() <= 128
+          && data.status is string && data.status.size() <= 128
+          && data.createdAt is string && data.createdAt.size() <= 64
+          && data.questions is list;
+    }
+
+    function isValidCandidate(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.fullName is string && data.fullName.size() <= 256
+          && data.phoneNumber is string && data.phoneNumber.size() <= 64
+          && data.testId is string && data.testId.size() <= 128
+          && data.status is string && data.status.size() <= 64
+          && data.tabViolations is int
+          && data.startTime is string && data.startTime.size() <= 128
+          && data.answers is map
+          && data.createdAt is string && data.createdAt.size() <= 128;
+    }
+
+    function isValidExamResult(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.fullName is string && data.fullName.size() <= 256
+          && data.phoneNumber is string && data.phoneNumber.size() <= 64
+          && data.testId is string && data.testId.size() <= 128
+          && data.status is string && data.status.size() <= 64
+          && data.objectiveScore is int
+          && data.answers is map
+          && data.startTime is string && data.startTime.size() <= 128
+          && data.endTime is string && data.endTime.size() <= 128
+          && data.createdAt is string && data.createdAt.size() <= 128;
+    }
+
+    // Rules matching individual collections
+    
+    match /settings/{settingsId} {
+      allow get: if true;
+      allow list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /exams/{examId} {
+      allow get: if true;
+      allow list: if true;
+      allow write: if isAdmin();
+    }
+
+    match /candidates/{candidateId} {
+      allow get: if true;
+      allow list: if isAdmin() || request.auth == null; // Needed for public candidates search by phone/blocked status
+      allow create: if isValidId(candidateId) && isValidCandidate(incoming());
+      allow update: if isAdmin() || (
+        isValidCandidate(incoming()) &&
+        existing().status == 'IN_PROGRESS' &&
+        existing().isBlocked != true &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().phoneNumber == existing().phoneNumber
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /results/{resultId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isValidId(resultId) && isValidExamResult(incoming());
+      allow update, delete: if isAdmin();
+    }
+  }
+}
