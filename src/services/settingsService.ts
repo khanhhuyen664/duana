@@ -4,11 +4,13 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 export interface GlobalSettings {
   backgroundColor: string;
   logoUrl: string;
+  externalApiUrl?: string;
 }
 
 const DEFAULT_SETTINGS: GlobalSettings = {
   backgroundColor: '#002147',
   logoUrl: '',
+  externalApiUrl: '',
 };
 
 export async function getGlobalSettings(): Promise<GlobalSettings> {

@@ -176,7 +176,7 @@ export default function AdminPanel({ isDarkMode, onThemeToggle, onClose, onLogin
   const [activeTab, setActiveTab] = useState<"candidates" | "tests" | "settings">("candidates");
 
   // Global branding settings
-  const [globalSettings, setGlobalSettings] = useState({ backgroundColor: "#002147", logoUrl: "" });
+  const [globalSettings, setGlobalSettings] = useState({ backgroundColor: "#002147", logoUrl: "", externalApiUrl: "" });
   const [settingsSaving, setSettingsSaving] = useState(false);
 
   // Custom toast and confirm modal states
@@ -1763,6 +1763,20 @@ export default function AdminPanel({ isDarkMode, onThemeToggle, onClose, onLogin
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
                 <p className="text-[11px] text-slate-450">Tải ảnh logo lên các trang lưu trữ ảnh rồi dán trực tiếp đường dẫn vào đây để thay thế biểu tượng EPT mặc định.</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-650 dark:text-slate-400">Đường dẫn API Backend cho AI (External API URL)</label>
+                <input
+                  type="text"
+                  placeholder="https://your-backend-app.onrender.com"
+                  value={globalSettings.externalApiUrl || ""}
+                  onChange={(e) => setGlobalSettings({ ...globalSettings, externalApiUrl: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                <p className="text-[11px] text-slate-450">
+                  Nhập địa chỉ máy chủ Node.js/Express của bạn (ví dụ trên Render, Railway hoặc Vercel). Chỉ cần thiết khi chạy trên môi trường tĩnh như GitHub Pages để hỗ trợ tính năng AI quét ảnh đề thi. Để trống nếu chạy trực tiếp fullstack local.
+                </p>
               </div>
 
               <div className="pt-4 border-t border-slate-150 dark:border-slate-800">
