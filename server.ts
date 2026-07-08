@@ -2,6 +2,15 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { Agent, setGlobalDispatcher } from "undici";
+
+// Configure undici's global dispatcher to prevent HeadersTimeoutError (default is 30s)
+const globalAgent = new Agent({
+  headersTimeout: 240000, // 4 minutes
+  bodyTimeout: 240000,    // 4 minutes
+  connectTimeout: 60000,  // 1 minute
+});
+setGlobalDispatcher(globalAgent);
 
 async function startServer() {
   const app = express();
@@ -28,6 +37,7 @@ async function startServer() {
       const ai = new GoogleGenAI({
         apiKey: geminiApiKey,
         httpOptions: {
+          timeout: 240000, // 4 minutes timeout
           headers: {
             'User-Agent': 'aistudio-build',
           }
