@@ -26,7 +26,8 @@ import {
   Sparkles,
   Link,
   Copy,
-  FolderOpen
+  FolderOpen,
+  BookOpen
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { loginAdmin, logoutAdmin, getCurrentAdminToken, isFirstRun, setupAdmin, changeAdminPassword } from "../services/auth";
@@ -601,7 +602,7 @@ export default function AdminPanel({ isDarkMode, onThemeToggle, onClose, onLogin
     setImageMimeType("image/jpeg");
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         const maxDim = 1200;
         let width = img.width;

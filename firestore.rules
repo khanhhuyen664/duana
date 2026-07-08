@@ -75,6 +75,15 @@ service cloud.firestore {
           && data.createdAt is string && data.createdAt.size() <= 128;
     }
 
+    function isValidMaterial(data) {
+      return data.id is string && data.id.size() <= 128
+          && data.title is string && data.title.size() <= 512
+          && data.type is string && data.type.size() <= 32
+          && data.url is string && data.url.size() <= 2048
+          && (!data.keys().hasAny(['description']) || (data.description is string && data.description.size() <= 4096))
+          && data.createdAt is string && data.createdAt.size() <= 128;
+    }
+
     // Rules matching individual collections
     
     match /settings/{settingsId} {
@@ -107,6 +116,13 @@ service cloud.firestore {
       allow get: if true;
       allow list: if isAdmin();
       allow create: if isValidId(resultId) && isValidExamResult(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    match /materials/{materialId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isValidId(materialId) && isValidMaterial(incoming());
       allow update, delete: if isAdmin();
     }
   }

@@ -3,34 +3,32 @@ import {
   Phone,
   User,
   AlertCircle,
-  HelpCircle,
-  Shield,
   Clock,
-  Play,
+  Shield,
   ArrowRight,
   Sparkles,
   PhoneCall,
   Lock,
-  Moon,
-  Sun,
-  LayoutGrid,
-  FileText,
   MessageSquare,
   Globe,
   MapPin,
   Mail,
-  Facebook
+  Facebook,
+  FileText
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { getGlobalSettings } from "../services/settingsService";
 import { getPublicActiveExams, getExamByCodeOrId } from "../services/examService";
 import { registerOrResumeCandidate } from "../services/candidateService";
+import { Language, translations } from "../locales";
 
 interface HomeViewProps {
   isDarkMode: boolean;
   onThemeToggle: () => void;
   onRegistered: (candidateData: any) => void;
   onAdminOpen: () => void;
+  lang: Language;
+  onLanguageChange: (lang: Language) => void;
 }
 
 export default function HomeView({
@@ -38,6 +36,8 @@ export default function HomeView({
   onThemeToggle,
   onRegistered,
   onAdminOpen,
+  lang,
+  onLanguageChange,
 }: HomeViewProps) {
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -63,6 +63,8 @@ export default function HomeView({
     contactAddress: "Số 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội"
   });
 
+  const t = translations[lang];
+
   useEffect(() => {
     // 1. Fetch system logo & branding background color & contact details
     getGlobalSettings()
@@ -80,9 +82,9 @@ export default function HomeView({
       getExamByCodeOrId(pathExamCode)
         .then((exam) => {
           if (!exam) {
-            setPathError("Kỳ thi không tồn tại hoặc đường dẫn không chính xác. Vui lòng kiểm tra lại.");
+            setPathError(lang === "vi" ? "Kỳ thi không tồn tại hoặc đường dẫn không chính xác. Vui lòng kiểm tra lại." : "Exam does not exist or invalid link. Please check again.");
           } else if (exam.status !== "Đang mở") {
-            setPathError("This exam is currently closed or has expired.");
+            setPathError(t.examClosed);
           } else {
             setTests([exam]);
             setSelectedTestId(exam.id);
@@ -91,7 +93,7 @@ export default function HomeView({
         })
         .catch((err) => {
           console.error("Error loading path-based exam:", err);
-          setPathError("Không thể tải thông tin kỳ thi. Vui lòng thử lại sau.");
+          setPathError(lang === "vi" ? "Không thể tải thông tin kỳ thi. Vui lòng thử lại sau." : "Failed to load exam. Please try again later.");
         });
     } else {
       // 3. Regular active tests load
@@ -114,7 +116,7 @@ export default function HomeView({
         })
         .catch((err) => console.error("Error loading public tests:", err));
     }
-  }, []);
+  }, [lang]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,17 +126,17 @@ export default function HomeView({
     const phone = phoneNumber.trim();
 
     if (!name) {
-      setError("Vui lòng nhập Họ và tên của bạn.");
+      setError(t.pleaseEnterName);
       return;
     }
     if (!phone) {
-      setError("Vui lòng nhập Số điện thoại của bạn.");
+      setError(t.pleaseEnterPhone);
       return;
     }
 
     const phoneRegex = /^[0-9\s+-.]{9,15}$/;
     if (!phoneRegex.test(phone)) {
-      setError("Số điện thoại không hợp lệ. Vui lòng kiểm tra lại.");
+      setError(t.invalidPhone);
       return;
     }
 
@@ -144,7 +146,16 @@ export default function HomeView({
       const result = await registerOrResumeCandidate(name, phone, selectedTestId);
       onRegistered(result.candidate);
     } catch (err: any) {
-      setError(err.message || "Có lỗi xảy ra khi kết nối. Vui lòng thử lại.");
+      if (err.status === "COMPLETED" || err.message?.includes("already completed") || err.message?.includes("hoàn thành")) {
+        setError(t.alreadyCompleted);
+      } else if (err.message?.includes("blocked") || err.message?.includes("khóa")) {
+        setError(lang === "vi"
+          ? "Số điện thoại của bạn đã bị khóa trên hệ thống phòng thi. Thí sinh đã khóa không thể tham gia bất kỳ kỳ thi nào."
+          : "Your phone number has been locked in the system. Locked candidates cannot participate in any exams."
+        );
+      } else {
+        setError(err.message || (lang === "vi" ? "Có lỗi xảy ra khi kết nối. Vui lòng thử lại." : "An error occurred. Please try again."));
+      }
     } finally {
       setLoading(false);
     }
@@ -154,7 +165,6 @@ export default function HomeView({
   const brandBgColor = globalSettings.backgroundColor || "#002147";
   const brandBgStyle = { backgroundColor: brandBgColor };
   const brandTextStyle = { color: brandBgColor };
-  const brandBorderStyle = { borderColor: brandBgColor };
 
   const currentTestObj = tests.find((t) => t.id === selectedTestId);
 
@@ -180,11 +190,35 @@ export default function HomeView({
             </div>
           )}
           <span className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 uppercase tracking-tight">
-            Placement Portal
+            {t.portalName}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Top-Right Language Toggle */}
+          <div className="flex items-center gap-1 border border-slate-200 dark:border-slate-800 rounded-xl p-0.5 bg-white/50 dark:bg-slate-900/50">
+            <button
+              onClick={() => onLanguageChange("vi")}
+              className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                lang === "vi"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              VI
+            </button>
+            <button
+              onClick={() => onLanguageChange("en")}
+              className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                lang === "en"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              EN
+            </button>
+          </div>
+
           <ThemeToggle isDarkMode={isDarkMode} onToggle={onThemeToggle} />
           
           <button
@@ -218,7 +252,7 @@ export default function HomeView({
               {currentTestObj ? currentTestObj.name : "ENGLISH PLACEMENT TEST"}
             </h1>
             <p className="text-md sm:text-lg text-indigo-600/90 dark:text-indigo-400 font-bold italic tracking-wide">
-              &ldquo;Your English Journey Starts Here.&rdquo;
+              &ldquo;{t.englishJourney}&rdquo;
             </p>
           </div>
 
@@ -226,21 +260,21 @@ export default function HomeView({
           <div className="p-4 bg-red-50 dark:bg-red-950/20 border-l-4 border-red-500 rounded-2xl shadow-sm space-y-2">
             <h3 className="text-xs font-black tracking-wider text-red-600 dark:text-red-400 uppercase flex items-center gap-1">
               <AlertCircle size={15} />
-              CẢNH BÁO AN NINH PHÒNG THI
+              {t.examSecurityWarning}
             </h3>
             <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 leading-relaxed font-semibold">
-              Thí sinh không được sử dụng từ điển, AI, công cụ dịch thuật hoặc nhờ người khác hỗ trợ. Nếu không biết đáp án, hãy bỏ qua và tiếp tục làm bài.
+              {t.examSecurityWarningText}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-2.5">
               <Clock size={16} className="text-indigo-500" style={brandTextStyle} />
-              <span>Thời gian: {selectedTestId === "exam-test-1" ? "45 Phút" : "Tự do"}</span>
+              <span>{t.time}: {selectedTestId === "exam-test-1" ? `45 ${t.minutes}` : t.selfPaced}</span>
             </div>
             <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center gap-2.5">
               <Shield size={16} className="text-emerald-500" />
-              <span>Chống gian lận tab-switch</span>
+              <span>{t.antiCheat}</span>
             </div>
           </div>
         </div>
@@ -269,16 +303,16 @@ export default function HomeView({
                     style={{ borderColor: brandBgColor, color: brandBgColor }}
                   >
                     <PhoneCall size={14} />
-                    THÔNG TIN LIÊN HỆ GIÁO VIÊN
+                    {t.contactTeacherBtn}
                   </button>
                 </div>
               </div>
             ) : (
               <>
                 <div className="space-y-1">
-                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">ĐĂNG KÝ DỰ THI</h2>
+                  <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t.registerTitle}</h2>
                   <p className="text-xs text-slate-500">
-                    Mỗi số điện thoại chỉ được thi 1 lần trên mỗi bài thi. Đăng ký đúng thông tin để tiếp tục bài thi đang dở.
+                    {t.registerDesc}
                   </p>
                 </div>
 
@@ -286,12 +320,12 @@ export default function HomeView({
                   {/* Dynamic Test Selector */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Bài thi tuyển sinh
+                      {t.selectExamLabel}
                     </label>
                     {isTestLocked ? (
                       <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center gap-2 text-sm font-semibold">
                         <FileText size={16} className="text-indigo-500" style={brandTextStyle} />
-                        <span>{currentTestObj ? currentTestObj.name : selectedTestId} (Đang khóa theo link)</span>
+                        <span>{currentTestObj ? currentTestObj.name : selectedTestId} ({t.lockedByLink})</span>
                       </div>
                     ) : (
                       <div className="relative">
@@ -321,14 +355,14 @@ export default function HomeView({
 
                   <div className="space-y-1.5">
                     <label htmlFor="reg-name" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Họ và tên thí sinh
+                      {t.fullNameLabel}
                     </label>
                     <div className="relative">
                       <User size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
                       <input
                         id="reg-name"
                         type="text"
-                        placeholder="Nhập đầy đủ Họ tên..."
+                        placeholder={t.fullNamePlaceholder}
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
@@ -339,14 +373,14 @@ export default function HomeView({
 
                   <div className="space-y-1.5">
                     <label htmlFor="reg-phone" className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Số điện thoại
+                      {t.phoneLabel}
                     </label>
                     <div className="relative">
                       <Phone size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
                       <input
                         id="reg-phone"
                         type="tel"
-                        placeholder="Nhập số điện thoại dự thi..."
+                        placeholder={t.phonePlaceholder}
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium"
@@ -370,7 +404,7 @@ export default function HomeView({
                       className="flex-1 py-3 text-white font-bold text-sm rounded-xl shadow-md transition-all hover:scale-102 active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
                       style={brandBgStyle}
                     >
-                      {loading ? "Đang xử lý..." : "BẮT ĐẦU LÀM BÀI"}
+                      {loading ? t.loading : t.startTestBtn}
                       <ArrowRight size={15} />
                     </button>
 
@@ -382,7 +416,7 @@ export default function HomeView({
                       style={{ borderColor: brandBgColor, color: brandBgColor }}
                     >
                       <PhoneCall size={14} />
-                      CONTACT TO TEACHER
+                      {t.contactTeacherBtn}
                     </button>
                   </div>
                 </form>
@@ -402,65 +436,70 @@ export default function HomeView({
           <div className="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 w-full max-w-md space-y-4 animate-slide-in overflow-y-auto max-h-[90vh]">
             <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 flex items-center gap-2">
               <Phone size={18} className="text-indigo-600" style={brandTextStyle} />
-              Thông tin liên hệ Giáo viên
+              {t.contactTitle}
             </h3>
             <p className="text-xs text-slate-500">
-              Bạn có thể sử dụng các liên kết tương tác dưới đây để liên hệ trực tiếp với giáo viên quản lý phòng thi.
+              {t.contactDesc}
             </p>
             
             <div className="p-4 bg-slate-50 dark:bg-slate-800/45 rounded-xl border border-slate-150 dark:border-slate-800 space-y-3">
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">ĐƠN VỊ / GIÁO VIÊN CHỦ QUẢN</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.teacherUnit}</p>
                 <p className="text-sm font-extrabold text-slate-800 dark:text-slate-100 mt-0.5">{globalSettings.contactName || "Conquer English Center"}</p>
               </div>
               {globalSettings.contactAddress && (
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                    <MapPin size={10} /> ĐỊA CHỈ
+                    <MapPin size={10} /> {t.address}
                   </p>
                   <p className="text-xs font-semibold text-slate-650 dark:text-slate-300 mt-0.5">{globalSettings.contactAddress}</p>
                 </div>
               )}
             </div>
 
+            {/* Interactive SĐT selection section */}
+            <div className="border border-slate-200 dark:border-slate-850 rounded-xl p-3.5 space-y-2">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Phone size={11} />
+                SĐT: {globalSettings.contactPhone || "0912 345 678"}
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <a
+                  href={`tel:${globalSettings.contactPhone || "0912 345 678"}`}
+                  className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-lg transition text-center flex items-center justify-center gap-1"
+                >
+                  <PhoneCall size={12} />
+                  Call
+                </a>
+                <a
+                  href={`sms:${globalSettings.contactPhone || "0912 345 678"}`}
+                  className="py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold rounded-lg transition text-center flex items-center justify-center gap-1"
+                >
+                  <MessageSquare size={12} />
+                  SMS
+                </a>
+                <a
+                  href={`https://zalo.me/${globalSettings.contactZalo || globalSettings.contactPhone || "0912 345 678"}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition text-center flex items-center justify-center gap-1"
+                >
+                  <Phone size={12} />
+                  Zalo
+                </a>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
-              {/* Call */}
-              <a
-                href={`tel:${globalSettings.contactPhone || "0912 345 678"}`}
-                className="py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition text-center flex items-center justify-center gap-1.5"
-              >
-                <PhoneCall size={13} />
-                Gọi Điện
-              </a>
-              {/* SMS */}
-              <a
-                href={`sms:${globalSettings.contactPhone || "0912 345 678"}`}
-                className="py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition text-center flex items-center justify-center gap-1.5"
-              >
-                <MessageSquare size={13} />
-                Gửi SMS
-              </a>
-              {/* Zalo */}
-              <a
-                href={`https://zalo.me/${globalSettings.contactZalo || globalSettings.contactPhone || "0912 345 678"}`}
-                target="_blank"
-                rel="noreferrer"
-                className="py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition text-center flex items-center justify-center gap-1.5"
-              >
-                <Phone size={13} />
-                Zalo Chat
-              </a>
               {/* Email */}
               <a
                 href={`mailto:${globalSettings.contactEmail || "info@conquerenglish.edu.vn"}`}
                 className="py-2.5 px-4 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition text-center flex items-center justify-center gap-1.5"
               >
                 <Mail size={13} />
-                Gửi Email
+                {t.sendEmail}
               </a>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
               {/* Facebook */}
               {globalSettings.contactFacebook && (
                 <a
@@ -470,9 +509,12 @@ export default function HomeView({
                   className="py-2.5 px-4 bg-blue-800 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition text-center flex items-center justify-center gap-1.5"
                 >
                   <Facebook size={13} />
-                  Facebook
+                  {t.facebook}
                 </a>
               )}
+            </div>
+
+            <div className="grid grid-cols-1">
               {/* Website */}
               {globalSettings.contactWebsite && (
                 <a
@@ -482,7 +524,7 @@ export default function HomeView({
                   className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition text-center flex items-center justify-center gap-1.5"
                 >
                   <Globe size={13} />
-                  Trang Web
+                  {t.website}
                 </a>
               )}
             </div>
@@ -492,7 +534,7 @@ export default function HomeView({
               id="teacher-close-btn"
               className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-xl transition cursor-pointer"
             >
-              ĐÓNG CỬA SỔ
+              {t.closeWindow}
             </button>
           </div>
         </div>

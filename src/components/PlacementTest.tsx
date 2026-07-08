@@ -34,19 +34,26 @@ import {
   WRITING_QUESTIONS
 } from "../data/questions";
 
+import { Language, translations } from "../locales";
+
 interface PlacementTestProps {
   candidate: any;
   isDarkMode: boolean;
   onThemeToggle: () => void;
   onFinished: (summaryData: any) => void;
+  lang: Language;
+  onLanguageChange: (lang: Language) => void;
 }
 
 export default function PlacementTest({
   candidate,
   isDarkMode,
   onThemeToggle,
-  onFinished
+  onFinished,
+  lang,
+  onLanguageChange
 }: PlacementTestProps) {
+  const t = translations[lang];
   // Navigation & Sub-pages
   // Page 1: Listening Part 1 (Guest Check-in)
   // Page 2: Listening Part 2 (Rented Properties table blanks)
@@ -350,20 +357,20 @@ export default function PlacementTest({
               <Shield size={48} />
             </div>
             <h1 className="text-4xl font-extrabold text-red-600 dark:text-red-400 tracking-tight uppercase">
-              CẢNH BÁO VI PHẠM AN NINH
+              {t.violationWarningTitle}
             </h1>
             <p className="text-lg text-slate-700 dark:text-slate-300">
-              Hệ thống phát hiện bạn vừa rời khỏi tab/cửa sổ bài thi. Hành vi này đã được tự động lưu lại vào lịch sử đánh giá của Hội đồng Giám khảo.
+              {t.violationWarningDesc}
             </p>
             <div className="p-4 bg-red-50 dark:bg-red-950/10 border border-red-100 dark:border-red-900 rounded-2xl text-sm font-semibold text-red-700 dark:text-red-400">
-              Tổng số lần rời tab ghi nhận: {tabViolations} lần
+              {t.violationsCount}: {tabViolations}
             </div>
             <button
               onClick={() => setShowCheatOverlay(false)}
               id="resume-test-btn"
               className="px-8 py-4 bg-[#002147] hover:bg-slate-800 text-white font-bold rounded-2xl shadow-xl transition-all cursor-pointer"
             >
-              TÔI ĐÃ HIỂU - QUAY LẠI LÀM BÀI
+              {lang === "vi" ? "TÔI ĐÃ HIỂU - QUAY LẠI LÀM BÀI" : "I UNDERSTAND - RETURN TO EXAM"}
             </button>
           </div>
         </div>
@@ -372,7 +379,7 @@ export default function PlacementTest({
       {/* TOP SLOGAN BANNER */}
       <div className="bg-gradient-to-r from-blue-900 via-[#002147] to-indigo-900 text-white py-2 px-6 text-center text-xs font-bold tracking-widest border-b border-yellow-500/40 uppercase shadow-sm flex items-center justify-center gap-2 select-none">
         <span className="text-yellow-400">★</span>
-        <span>CHINH PHỤC TIẾNG ANH - VƯƠN TẦM THẾ GIỚI - KHAI PHÓNG TƯƠNG LAI</span>
+        <span>{lang === "vi" ? "CHINH PHỤC TIẾNG ANH - VƯƠN TẦM THẾ GIỚI - KHAI PHÓNG TƯƠNG LAI" : "CONQUER ENGLISH - REACH THE WORLD - UNLEASH THE FUTURE"}</span>
         <span className="text-yellow-400">★</span>
       </div>
 
@@ -390,7 +397,7 @@ export default function PlacementTest({
             Placement
           </div>
           <h1 className="text-sm sm:text-base md:text-lg font-bold tracking-tight uppercase">
-            English Placement Test
+            {t.testTitle}
           </h1>
         </div>
 
@@ -398,6 +405,30 @@ export default function PlacementTest({
           <div className="hidden sm:flex flex-col items-end text-right">
             <span className="text-[10px] uppercase opacity-60 font-semibold">Candidate</span>
             <span className="text-sm font-medium">{candidate.fullName}</span>
+          </div>
+
+          {/* Dynamic Language Toggle during active quiz */}
+          <div className="flex items-center gap-1 border border-white/20 rounded-xl p-0.5 bg-white/5">
+            <button
+              onClick={() => onLanguageChange("vi")}
+              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-lg transition-all ${
+                lang === "vi"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              VI
+            </button>
+            <button
+              onClick={() => onLanguageChange("en")}
+              className={`px-1.5 py-0.5 text-[9px] font-bold rounded-lg transition-all ${
+                lang === "en"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              EN
+            </button>
           </div>
 
           {/* Timer Widget */}
@@ -414,9 +445,11 @@ export default function PlacementTest({
 
       {/* Anti-Cheat / Warning Banner */}
       <div className="bg-red-50 dark:bg-red-950/25 border-b border-red-250 dark:border-red-900/40 px-6 sm:px-8 py-2.5 flex items-center gap-3 shrink-0">
-        <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">An Ninh</span>
+        <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">{lang === "vi" ? "An Ninh" : "Security"}</span>
         <p className="text-xs text-red-700 dark:text-red-300 font-medium leading-relaxed">
-          CẢNH BÁO: Nghiêm cấm sử dụng tài liệu, từ điển, công cụ dịch thuật hoặc AI trong quá trình làm bài. Nếu bạn rời khỏi tab làm bài hoặc mở ứng dụng khác, hệ thống sẽ tự động ghi nhận vi phạm. Nếu không biết câu trả lời, hãy bấm BỎ QUA. (Số lần rời tab ghi nhận: <span className="font-bold underline text-red-650 dark:text-red-400">{tabViolations}</span>)
+          {lang === "vi"
+            ? `CẢNH BÁO: Nghiêm cấm sử dụng tài liệu, từ điển, công cụ dịch thuật hoặc AI trong quá trình làm bài. Nếu bạn rời khỏi tab làm bài hoặc mở ứng dụng khác, hệ thống sẽ tự động ghi nhận vi phạm. Nếu không biết câu trả lời, hãy bấm BỎ QUA. (Số lần rời tab ghi nhận: ${tabViolations})`
+            : `WARNING: Dictionaries, translators, or AI are strictly forbidden. Switching tabs or opening other apps triggers violation logs. If you do not know the answer, please SKIP. (Recorded tab violations: ${tabViolations})`}
         </p>
       </div>
 
